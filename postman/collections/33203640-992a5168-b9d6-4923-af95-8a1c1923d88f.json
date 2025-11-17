@@ -1,0 +1,483 @@
+{
+	"info": {
+		"_postman_id": "33203640-992a5168-b9d6-4923-af95-8a1c1923d88f",
+		"name": "Text Extract API QA Suite",
+		"description": "Regression-ready tests that exercise all public endpoints on the text-extract-api service.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "01 - OCR Upload (Multipart)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"const jsonData = pm.response.json();",
+							"if (jsonData.task_id) {",
+							"    pm.collectionVariables.set(\"last_task_id\", jsonData.task_id);",
+							"    pm.test(\"task_id captured\", function () {",
+							"        pm.expect(jsonData.task_id).to.be.a('string');",
+							"    });",
+							"} else {",
+							"    pm.test(\"Response contains task_id\", function () {",
+							"        pm.expect.fail('task_id missing in response');",
+							"    });",
+							"}"
+						]
+					}
+				}
+			],
+			"id": "33203640-51275748-d58f-4dc7-bd5e-8766055c15bc",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "strategy",
+							"value": "{{ocr_strategy}}",
+							"type": "text"
+						},
+						{
+							"key": "prompt",
+							"value": "{{sample_prompt}}",
+							"type": "text"
+						},
+						{
+							"key": "model",
+							"value": "{{ocr_model}}",
+							"type": "text"
+						},
+						{
+							"key": "ocr_cache",
+							"value": "{{ocr_cache}}",
+							"type": "text"
+						},
+						{
+							"key": "storage_profile",
+							"value": "{{storage_profile}}",
+							"type": "text"
+						},
+						{
+							"key": "storage_filename",
+							"value": "{{storage_filename}}",
+							"type": "text"
+						},
+						{
+							"key": "language",
+							"value": "en",
+							"type": "text"
+						},
+						{
+							"key": "file",
+							"type": "file",
+							"src": "{{test_file_path}}"
+						}
+					]
+				},
+				"url": {
+					"raw": ""
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "02 - OCR Request (Base64 JSON)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"const jsonData = pm.response.json();",
+							"if (jsonData.task_id) {",
+							"    pm.collectionVariables.set(\"last_task_id\", jsonData.task_id);",
+							"}"
+						]
+					}
+				}
+			],
+			"id": "33203640-df08f389-8544-459f-9c6e-f1694edd4bb6",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"strategy\": \"{{ocr_strategy}}\",\n  \"prompt\": \"{{sample_prompt}}\",\n  \"model\": \"{{ocr_model}}\",\n  \"file\": \"{{sample_base64_document}}\",\n  \"ocr_cache\": true,\n  \"storage_profile\": \"{{storage_profile}}\",\n  \"storage_filename\": \"{{storage_filename}}\",\n  \"language\": \"en\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/ocr/request",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"ocr",
+						"request"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "03 - OCR Result Poll",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"const jsonData = pm.response.json();",
+							"pm.test(\"State field present\", function () {",
+							"    pm.expect(jsonData.state).to.be.a('string');",
+							"});"
+						]
+					}
+				}
+			],
+			"id": "33203640-58c115c8-cb88-4e88-b662-30a0d7170e03",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/ocr/result/{{last_task_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"ocr",
+						"result",
+						"{{last_task_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "04 - Clear OCR Cache",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Message confirms cache clear\", function () {",
+							"    const body = pm.response.json();",
+							"    pm.expect(body.status).to.include('cleared');",
+							"});"
+						]
+					}
+				}
+			],
+			"id": "33203640-96277474-5acc-45e9-abb4-2021b83f5d8e",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/ocr/clear_cache",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"ocr",
+						"clear_cache"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "05 - Storage List",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Files array exists\", function () {",
+							"    const body = pm.response.json();",
+							"    pm.expect(body.files).to.be.an('array');",
+							"});"
+						]
+					}
+				}
+			],
+			"id": "33203640-b1fd94ba-5252-4ed2-937c-1cc7a80e1b2d",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/storage/list?storage_profile={{storage_profile}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"storage",
+						"list"
+					],
+					"query": [
+						{
+							"key": "storage_profile",
+							"value": "{{storage_profile}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "06 - Storage Load",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});"
+						]
+					}
+				}
+			],
+			"id": "33203640-9a035139-eeea-4c85-9fee-24cd19a12ff8",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/storage/load?file_name={{storage_filename}}&storage_profile={{storage_profile}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"storage",
+						"load"
+					],
+					"query": [
+						{
+							"key": "file_name",
+							"value": "{{storage_filename}}"
+						},
+						{
+							"key": "storage_profile",
+							"value": "{{storage_profile}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "07 - Storage Delete",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test(\"Deletion acknowledged\", function () {",
+							"    const body = pm.response.json();",
+							"    pm.expect(body.status).to.include('deleted');",
+							"});"
+						]
+					}
+				}
+			],
+			"id": "33203640-b604ba32-0409-4caf-bbf2-8004406d870b",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/storage/delete?file_name={{storage_filename}}&storage_profile={{storage_profile}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"storage",
+						"delete"
+					],
+					"query": [
+						{
+							"key": "file_name",
+							"value": "{{storage_filename}}"
+						},
+						{
+							"key": "storage_profile",
+							"value": "{{storage_profile}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "08 - LLM Pull",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});"
+						]
+					}
+				}
+			],
+			"id": "33203640-792409e9-deff-4156-a411-07ae871ccc62",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"model\": \"{{ocr_model}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/llm/pull",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"llm",
+						"pull"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "09 - LLM Generate",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});"
+						]
+					}
+				}
+			],
+			"id": "33203640-45fd00fb-246c-48c8-97dc-8cca3cdac917",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"model\": \"{{ocr_model}}\",\n  \"prompt\": \"{{sample_prompt}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/llm/generate",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"llm",
+						"generate"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000"
+		},
+		{
+			"key": "ocr_strategy",
+			"value": "docling"
+		},
+		{
+			"key": "ocr_model",
+			"value": "llama3.1"
+		},
+		{
+			"key": "sample_prompt",
+			"value": "Summarize the uploaded document into Markdown and JSON sections."
+		},
+		{
+			"key": "ocr_cache",
+			"value": "true"
+		},
+		{
+			"key": "storage_profile",
+			"value": "default"
+		},
+		{
+			"key": "storage_filename",
+			"value": "agent-test-output.json"
+		},
+		{
+			"key": "test_file_path",
+			"value": "examples/example-mri.pdf"
+		},
+		{
+			"key": "sample_base64_document",
+			"value": "<REPLACE_WITH_BASE64_DATA>"
+		},
+		{
+			"key": "last_task_id",
+			"value": ""
+		}
+	]
+}
